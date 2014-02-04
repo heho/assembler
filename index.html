@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title></title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
+
+        <link rel="stylesheet" href="css/normalize.css">
+        <link rel="stylesheet" href="css/main.css">
+        <script src="js/vendor/modernizr-2.6.2.min.js"></script>
+    </head>
+    <body>
+        <!--[if lt IE 7]>
+            <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
+        <![endif]-->
+
+        <!-- Add your site or application content here -->
+        <div id="inputDiv">
+            <div class="box">
+                <textarea id="input" cols="74" rows="16"></textarea>
+            </div>
+            <div class="box">  
+                <button id="run">Run</button>
+                <button id="setMemory">load Code</button>
+                <button id="resetRegisters">reset Registers</button>
+                <button id="doTick">do step</button>
+                <button id="printStatus">print Status</button>
+                <button id="clearConsole">clear console</button>
+            </div>
+            
+        </div>
+        <div id="debugDiv">
+        </div>
+        <div id="instructions">
+How to use?
+
+Each code line must contain 16bits or equivalent information keep that in mind
+You can leave a line empty for formating reasons but notice that it will completly be ignored.
+This is very important when you address lines, remind yourself of the empty lines
+
+The Assembler runs over the code starting at the first line and working its way through it.
+Every line is than treated as a command, regardless of your intention to use it. So if you put
+0000000000000011 in a line and the assembler runs the command it recognizes it as QUIT and stops working
+
+Each command has parameters (even though it might ignore them) and is split into different parts in order to
+get those parameters.
+
+There are 2 different type of commands 4bit commands and 8bit commands. All 4bit commands start with a 1 thus all
+8bit commands start with a 0. These different commands are used to modify the memory and the registers. Notice
+that your whole code is loaded into the memory at the beginning. Currently the max size of the memory is 64, but
+it can be easily adjusted(if you are me). However the current size of a memory address is 8bit.
+
+Registers are 16bit storages directly in the controller, which are used in most operations. While memory has
+only different addresses the registers have names in addition to their number. These names and numbers are:
+
+NAME        | NUMBER
+zero        | 0000
+one         | 0001
+accu        | 0010
+register1   | 0011
+register2   | 0100
+register3   | 0101
+register4   | 0110
+register5   | 0111
+position    | 1111
+
+Not all registers are changeble. one and zero e.g. cant be changed(in this model. you could do so by changing
+the code). And even though the position register can be changed(it must be in order to determine the next command)
+it is highly recommended only to do this without special commands like jumwhen you really know what you are 
+doing. Stuff tends to get messy if you mess with the position register.
+
+So far we know:
+Commands are 4/8 bit long
+registers addresses are 4bit long
+memory addresses are 8bit long
+
+But we dont know the commands yet so lets change that. Commands can be written in 2 ways
+1. as a string of numbers e.g. 00000000 for quitting the programm
+2. as a string that translates to numbers e.g. QUIT
+the parser knows some translations for all commands and some other usefull stuff so feel free
+to use it.
+here is a list of all translations:
+
+CODE      | TRANSLATION| DESCRIPTION
+LOADL     | 1001       | load from following to accu //for longer addresses if needed
+SAVEL     | 1010       | save to following to accu //for longer addresses if needed
+LOADR     | 1011       | load to reg1 from address
+SAVER     | 1100       | save from reg2 to address
+EQUALN    | 1101       | equal values of reg1 and reg2 lead to a jump to pos+n
+QUIT      | 00000000   | quit the programm run 
+LOAD      | 00000001   | load from address to accu 
+SAVE      | 00000010   | to address to accu 
+ADD       | 00000011   | add reg1 to reg2 and put value into accu
+SUB       | 00000100   | subtract reg2 from reg1 and put value into accu
+JUMP      | 00000101   | jump to given address
+EQUAL     | 00000110   | equal values of reg1 and reg2 lead to a jump to position+2
+GREATER   | 00000111   | greater values of reg1 than reg2 lead to a jump to position+2
+SMALLER   | 00001000   | smaller values of reg1 than reg2 lead to a jump to position+2
+UNEQUAL   | 00001001   | unequal values of reg1 and reg2 lead to a jump to position+2
+COPY      | 00001010   | copy value of reg1 into reg2
+MULTIPLY  | 00001011   | multiply reg1 and reg2 and put value into accu
+SHIFTLEFT | 00001100   | shiftleft reg1 by n
+SHIFTRIGHT| 00001101   | shiftright reg2 by n
+
+the arguments are alway listed in order in the description. so when it says: 
+"equal values of reg1 and reg2 lead to a jump to pos+n"
+the line would be arranged like this:
+EQUALN reg1 reg2 n
+if you want reg1 to be the one register and reg2 to be register one and the jumplength to be 6 you would write
+1101 0001 0011 0101
+or
+EQUALN 0001 0011 0101
+
+I havent told you yet but: YOU CAN HAVE AS MANY SPACES AS YOU LIKE THEY ARE SIMPLY IGNORED!!! ok calm down...
+So you can format the code the way you like it. You can also add comments with a # But notice that everything
+behing it will be ignored so that a line only containing a comment counts as a free line.
+And here you go. Oh wait as an inspiration I have the following code for you that my girlfriend wrote. It adds
+3 and 4 and writes the result into memory field 7:
+
+LOADR  0011  0000 0101 # load line 5 into reg1
+LOADR  0100  0000 0110 # load line 6 into reg2
+ADD 0011 0100          # add reg1 and reg2 and write to accu
+SAVE 0000 0111         # save accu to memory address 7
+QUIT EMPTY             # quit programm
+0000 0000 0000 0011    # m = 3
+0000 0000 0000 0100    # n = 4
+        </div>
+
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+        <script>window.jQuery || document.write('<script src="js/vendor/jquery-1.10.2.min.js"><\/script>')</script>
+        <script src="js/plugins.js"></script>
+        <script>
+        if (typeof console  != "undefined") {
+           if (typeof console.log != 'undefined') {
+                console.olog = console.log;
+                console.oerror = console.error;
+            } 
+        } else {
+            console.olog = function() {};
+            console.oerror= function() {};
+        }
+
+        console.log = function(message) {
+            console.olog(message);
+            $('#debugDiv').append('<p>' + message + '</p>');
+        };
+        console.error = function(message) {
+            console.oerror(message);
+            $('#debugDiv').append('<p class="error">' + message + '</p>');
+        };
+
+        console.debug = console.info =  console.log
+        </script>
+        <script src="js/main.js"></script>
+        <script>
+            controller = new Controller();
+            $("#run").click(function () {
+                var input = compileToAssembler($("#input").val());
+                controller.loadMemoryFromArray(input);
+                controller.run(0, true);
+            });
+
+            $("#setMemory").click(function () {
+                var input = compileToAssembler($("#input").val(), true);
+                controller.loadMemoryFromArray(input);
+            });
+
+            $("#resetRegisters").click(function () {
+                controller.emptyRegisters();
+            });
+
+            $("#doTick").click(function () {
+                controller.doTick(true);
+            });
+
+            $("#clearConsole").click(function () {
+                $("#debugDiv").empty();
+            })
+
+            $("#printStatus").click(function () {
+                controller.printStatus();
+            });
+
+        </script>
+    </body>
+</html>
