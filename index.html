@@ -121,16 +121,28 @@ EQUALN 0001 0011 0101
 I havent told you yet but: YOU CAN HAVE AS MANY SPACES AS YOU LIKE THEY ARE SIMPLY IGNORED!!! ok calm down...
 So you can format the code the way you like it. You can also add comments with a # But notice that everything
 behing it will be ignored so that a line only containing a comment counts as a free line.
+
+Also worth noticing: Lines that start with an * contain compiler directives. Use with care. They dont check for
+anything. The only thing you can do with them at the moment is setting more translations for the compiler
+e.g. by using the line "*var one 0001" the compiler will later translate each occurence of "one" to 0001.
+But beware the vars are translated in order so if you add "*var ones 1111" later the codeline ones will translate
+to 0001s. So always use either unique names or put the variables with names that contain other variable names first.
+For the example switching those lines will do. Also notice that you can overwrite compiler variables like QUIT
+so "*var QUIT = 0000 0000 0000 0000 # 16 times" QUIT will compile to 16 zeros. As spaces and comments are cleared at the end.
+(in most cases) you can use them in your definitions. 
+
 And here you go. Oh wait as an inspiration I have the following code for you that my girlfriend wrote. It adds
 3 and 4 and writes the result into memory field 7:
 
-LOADR  0011  0000 0101 # load line 5 into reg1
-LOADR  0100  0000 0110 # load line 6 into reg2
-ADD 0011 0100          # add reg1 and reg2 and write to accu
-SAVE 0000 0111         # save accu to memory address 7
-QUIT EMPTY             # quit programm
-0000 0000 0000 0011    # m = 3
-0000 0000 0000 0100    # n = 4
+*var reg1 = 0011
+*var reg2 = 0100
+LOADR reg1 0000 0101 # load line 5 into reg1 
+LOADR reg2 0000 0110 # load line 6 into reg2 
+ADD reg1 reg2 # add reg1 and reg2 and write to accu 
+SAVE 0000 0111 # save accu to memory address 7 
+QUIT EMPTY # quit programm 
+0000 0000 0000 0011 # m = 3
+0000 0000 0000 0100 # n = 4
         </div>
 
         <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>

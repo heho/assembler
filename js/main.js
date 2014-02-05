@@ -64,7 +64,7 @@ commands
 
 
 (function() {
-  var CELLSIZE, Cell, Controller, MEMORYADDRESSSPACE, MEMORYSIZE, Memory, bin2Dec, dec2Bin, fitLength, root, type,
+  var CELLSIZE, Cell, Controller, HARDDISKSIZE, Harddisk, MEMORYADDRESSSPACE, MEMORYSIZE, Memory, PAGESIZE, bin2Dec, dec2Bin, fitLength, root, translations, type,
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
   CELLSIZE = 16;
@@ -73,7 +73,13 @@ commands
 
   MEMORYADDRESSSPACE = 8;
 
+  HARDDISKSIZE = 1024;
+
+  PAGESIZE = CELLSIZE * MEMORYSIZE / 2;
+
   root = typeof exports !== "undefined" && exports !== null ? exports : this;
+
+  translations = [[/LOADL/g, "1001"], [/SAVEL/g, "1010"], [/LOADR/g, "1011"], [/SAVER/g, "1100"], [/EQUALN/g, "1101"], [/ZERO/g, "0000000000000000"], [/EMPTY/g, "00000000"], [/QUIT/g, "00000000"], [/LOAD/g, "00000001"], [/SAVE/g, "00000010"], [/ADD/g, "00000011"], [/SUB/g, "00000100"], [/JUMP/g, "00000101"], [/EQUAL/g, "00000110"], [/GREATER/g, "00000111"], [/SMALLER/g, "00001000"], [/UNEQUAL/g, "00001001"], [/COPY/g, "00001010"], [/MULTIPLY/g, "00001011"], [/MUL/g, "00001011"], [/SHIFTLEFT/g, "00001100"], [/SHIFTRIGHT/g, "00001101"]];
 
   type = function(obj) {
     var classToType;
@@ -140,7 +146,7 @@ commands
   };
 
   root.compileToAssembler = function(string, debug) {
-    var line, lines, result, split, _i, _len;
+    var directiveType, line, lines, result, split, translation, userTranslations, varDef, varnameRegEx, _i, _j, _k, _len, _len1, _len2;
     if (debug == null) {
       debug = false;
     }
@@ -149,30 +155,34 @@ commands
     if (debug) {
       console.log("converting code: ");
     }
+    userTranslations = [];
     for (_i = 0, _len = lines.length; _i < _len; _i++) {
       line = lines[_i];
-      line = line.replace(/LOADL/g, "1001");
-      line = line.replace(/SAVEL/g, "1010");
-      line = line.replace(/LOADR/g, "1011");
-      line = line.replace(/SAVER/g, "1100");
-      line = line.replace(/EQUALN/g, "1101");
-      line = line.replace(/ZERO/g, "0000000000000000");
-      line = line.replace(/EMPTY/g, "00000000");
-      line = line.replace(/QUIT/g, "00000000");
-      line = line.replace(/LOAD/g, "00000001");
-      line = line.replace(/SAVE/g, "00000010");
-      line = line.replace(/ADD/g, "00000011");
-      line = line.replace(/SUB/g, "00000100");
-      line = line.replace(/JUMP/g, "00000101");
-      line = line.replace(/EQUAL/g, "00000110");
-      line = line.replace(/GREATER/g, "00000111");
-      line = line.replace(/SMALLER/g, "00001000");
-      line = line.replace(/UNEQUAL/g, "00001001");
-      line = line.replace(/COPY/g, "00001010");
-      line = line.replace(/MULTIPLY/g, "00001011");
-      line = line.replace(/MUL/g, "00001011");
-      line = line.replace(/SHIFTLEFT/g, "00001100");
-      line = line.replace(/SHIFTRIGHT/g, "00001101");
+      if (line.charAt(0) === "*") {
+        split = line.split('#', 1);
+        line = split[0];
+        if (line.length > 3) {
+          directiveType = line.charAt(1) + line.charAt(2) + line.charAt(3);
+          switch (directiveType) {
+            case "set":
+              l;
+              break;
+            case "var":
+              varDef = line.slice(5).split(" = ");
+              varnameRegEx = new RegExp(varDef[0], "g");
+              userTranslations.push([varnameRegEx, varDef[1]]);
+          }
+        }
+        line = "";
+      }
+      for (_j = 0, _len1 = userTranslations.length; _j < _len1; _j++) {
+        translation = userTranslations[_j];
+        line = line.replace(translation[0], translation[1]);
+      }
+      for (_k = 0, _len2 = translations.length; _k < _len2; _k++) {
+        translation = translations[_k];
+        line = line.replace(translation[0], translation[1]);
+      }
       line = line.replace(/\s/g, '');
       split = line.split('#', 1);
       line = split[0];
@@ -582,6 +592,20 @@ commands
     };
 
     return Memory;
+
+  })();
+
+  Harddisk = (function() {
+    function Harddisk(size, pagesize) {
+      if (size == null) {
+        size = HARDDISKSIZE;
+      }
+      if (pagesize == null) {
+        pagesize = PAGESIZE;
+      }
+    }
+
+    return Harddisk;
 
   })();
 

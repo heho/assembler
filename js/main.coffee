@@ -80,6 +80,31 @@ PAGESIZE = CELLSIZE * MEMORYSIZE/2
 
 root = exports ? this
 
+translations = [
+	[/LOADL/g, "1001"]
+	[/SAVEL/g, "1010"]
+	[/LOADR/g, "1011"]
+	[/SAVER/g, "1100"]
+	[/EQUALN/g, "1101"]
+	[/ZERO/g, "0000000000000000"]
+	[/EMPTY/g, "00000000"]
+	[/QUIT/g, "00000000"] 
+	[/LOAD/g, "00000001"]  
+	[/SAVE/g, "00000010"]  
+	[/ADD/g, "00000011"]  
+	[/SUB/g, "00000100"]  
+	[/JUMP/g, "00000101"]  
+	[/EQUAL/g, "00000110"]  
+	[/GREATER/g, "00000111"]  
+	[/SMALLER/g, "00001000"]  
+	[/UNEQUAL/g, "00001001"]  
+	[/COPY/g, "00001010"]
+	[/MULTIPLY/g, "00001011"]
+	[/MUL/g, "00001011"]
+	[/SHIFTLEFT/g, "00001100"]
+	[/SHIFTRIGHT/g, "00001101"]
+]
+
 type = (obj) ->
 	if obj == undefined or obj == null
 		return String obj
@@ -124,30 +149,34 @@ root.compileToAssembler = (string, debug = false) ->
 
 	console.log "converting code: " if debug
 
+	userTranslations = []
+
 	for line in lines
+		#check for compiler directive
+		if line.charAt(0) is "*"
+			#remove comments before further disection of directive
+			split = line.split '#', 1
+			line = split[0]
+
+			if line.length > 3
+				directiveType = line.charAt(1) + line.charAt(2) + line.charAt(3)
+
+				switch directiveType
+					when "set"
+						l
+					when "var"
+						varDef = line.slice(5).split(" = ")
+						varnameRegEx = new RegExp(varDef[0], "g");
+						userTranslations.push [varnameRegEx, varDef[1]]
+
+			line = ""
+
+		for translation in userTranslations
+			line = line.replace translation[0], translation[1]
+				
 		#replace literal commands
-		line = line.replace /LOADL/g, "1001"
-		line = line.replace /SAVEL/g, "1010"
-		line = line.replace /LOADR/g, "1011"
-		line = line.replace /SAVER/g, "1100"
-		line = line.replace /EQUALN/g, "1101"
-		line = line.replace /ZERO/g, "0000000000000000"
-		line = line.replace /EMPTY/g, "00000000"
-		line = line.replace /QUIT/g, "00000000" 
-		line = line.replace /LOAD/g, "00000001"  
-		line = line.replace /SAVE/g, "00000010"  
-		line = line.replace /ADD/g, "00000011"  
-		line = line.replace /SUB/g, "00000100"  
-		line = line.replace /JUMP/g, "00000101"  
-		line = line.replace /EQUAL/g, "00000110"  
-		line = line.replace /GREATER/g, "00000111"  
-		line = line.replace /SMALLER/g, "00001000"  
-		line = line.replace /UNEQUAL/g, "00001001"  
-		line = line.replace /COPY/g, "00001010"
-		line = line.replace /MULTIPLY/g, "00001011"
-		line = line.replace /MUL/g, "00001011"
-		line = line.replace /SHIFTLEFT/g, "00001100"
-		line = line.replace /SHIFTRIGHT/g, "00001101"
+		for translation in translations
+			line = line.replace translation[0], translation[1]
 		#remove spaces
 		line = line.replace /\s/g, ''
 		#remove comments
