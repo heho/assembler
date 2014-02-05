@@ -71,6 +71,8 @@ commands
 CELLSIZE = 16
 MEMORYSIZE = 64
 MEMORYADDRESSSPACE = 8
+HARDDISKSIZE = 1024
+PAGESIZE = CELLSIZE * MEMORYSIZE/2
 
 #+-----------------------------------------------+
 #|                    HELPER                     |
@@ -432,6 +434,14 @@ class Memory
 			return
 
 		@cells[position].getBeautiful()
+
+
+#
+#                    HARDDISK
+#
+
+class Harddisk
+	constructor: (size = HARDDISKSIZE, pagesize = PAGESIZE) ->
 
 #
 #                   CONTROLLER
